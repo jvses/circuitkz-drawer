@@ -1,0 +1,1 @@
+g++ main.cpp examplewindow.cpp -o circ_draw $(pkg-config gtkmm-4.0 --cflags --libs) --std=c++17
