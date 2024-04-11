@@ -158,6 +158,8 @@ void prepare_latex_line3p(string str[]){ // função ajusta as orientações dos
   float aux_x = stoi(str[ COMP_X ]) , aux_y = stoi(str[COMP_Y]);
   //cout << "Os valores respectivos de aux x e y são: " << aux_x << " e " << aux_y << '\n';
   //size_t size_aux = sizeof(float) * 2;
+  string name_orientation = "";
+  string name_ori_comp = "";
   int rotate_aux = stoi(str[COPM_ROTATE]), mirrorx= stoi(str[COMP_MirrorX]);
   if(mirrorx){//caso tenha espelhamento (ainda não terminei de ajustar as coisas)
     array_comp3[comp3_num].espelhado = true;
@@ -176,6 +178,8 @@ switch(rotate_aux){
           array_comp3[comp3_num].LS[1] = aux_y - 30;
         }
         comp_type.append(", rotate=180");
+        name_orientation.append("{\\rotatebox{0}{\\ctikzflipx{");
+        name_ori_comp.append("}}}");
         break;
       case 3:
         array_comp3[comp3_num].LG[0] = aux_x;
@@ -191,7 +195,9 @@ switch(rotate_aux){
         }
 
         comp_type.append(", rotate=90");
-        /*
+        name_orientation.append("{\\rotatebox{90}{\\ctikzflipy{");
+        name_ori_comp.append("}}}"); 
+       /*
         array_comp3[comp3_num].LG[] = {aux_x , aux_y - 30};
         array_comp3[comp3_num].LD[] = {aux_x - 30, aux_y};
         array_comp3[comp3_num].LS[] = {aux_x + 30, aux_y};*/
@@ -209,7 +215,8 @@ switch(rotate_aux){
           array_comp3[comp3_num].LD[1] = aux_y - 30;
         }
         comp_type.append(", rotate=0");
-        /*
+        name_orientation.append("{\\rotatebox{0}{\\ctikzflipy{");
+        name_ori_comp.append("}}}");        /*
         array_comp3[comp3_num].LG[] = {aux_x - 30 , aux_y};
         array_comp3[comp3_num].LD[] = {aux_x , aux_y + 30};
         array_comp3[comp3_num].LS[] = {aux_x , aux_y - 30};*/
@@ -228,6 +235,8 @@ switch(rotate_aux){
         }
 
         comp_type.append(", rotate=-90");
+        name_orientation.append("{\\rotatebox{-90}{\\ctikzflipx{");
+        name_ori_comp.append("}}}");
         /*
         array_comp3[comp3_num].LG[] = {aux_x , aux_y + 30};
         array_comp3[comp3_num].LD[] = {aux_x + 30, aux_y};
@@ -254,7 +263,8 @@ switch(rotate_aux){
           array_comp3[comp3_num].LD[1] = aux_y + 30;
           array_comp3[comp3_num].LS[1] = aux_y - 30;
         }
-
+        name_orientation.append("{");
+        name_ori_comp.append("}");
         comp_type.append(", rotate=0");
         /*
         array_comp3[comp3_num].LG[] = {aux_x - 30 , aux_y};
@@ -273,7 +283,8 @@ switch(rotate_aux){
           array_comp3[comp3_num].LS[0] = aux_x - 30;
           array_comp3[comp3_num].LD[0] = aux_x + 30;
         }
-
+        name_orientation.append("{\\rotatebox{-90}{");
+        name_ori_comp.append("}}");
         comp_type.append(", rotate=90");
         /*
         array_comp3[comp3_num].LG[] = {aux_x , aux_y + 30};
@@ -292,7 +303,8 @@ switch(rotate_aux){
           array_comp3[comp3_num].LS[1] = aux_y + 30;
           array_comp3[comp3_num].LD[1] = aux_y - 30;
         }
-
+        name_orientation.append("{\\rotatebox{180}{");
+        name_ori_comp.append("}}");
         comp_type.append(", rotate=180");
         /*
         array_comp3[comp3_num].LG[] = {aux_x + 30 , aux_y};
@@ -312,7 +324,8 @@ switch(rotate_aux){
           array_comp3[comp3_num].LS[0] = aux_x + 30;
           array_comp3[comp3_num].LD[0] = aux_x - 30;
         }
-
+        name_orientation.append("{\\rotatebox{90}{");
+        name_ori_comp.append("}}");
         comp_type.append(", rotate=-90");
         /*
         array_comp3[comp3_num].LG[] = {aux_x , aux_y - 30};
@@ -339,7 +352,7 @@ switch(rotate_aux){
   array_comp3[comp3_num].nome = str[COMP_ID];
   aux_x = round( (aux_x) *1/3) / 10;
   aux_y = -round( (aux_y) *1/3 ) / 10 ;
-  cout << "\\draw (" << aux_x << "," << aux_y << ") node[" << comp_type << "] (" << array_comp3[comp3_num].nome << ") {" << array_comp3[comp3_num].nome << "};" << '\n'; 
+  cout << "\\draw (" << aux_x << "," << aux_y << ") node[" << comp_type << "] (" << array_comp3[comp3_num].nome << ") "<< name_orientation << array_comp3[comp3_num].nome << name_ori_comp << ";" << '\n'; 
     //  cout << "detectado componente do tipo node" << '\n';
   comp3_num++;
 }
@@ -426,19 +439,21 @@ void wire_handler(string str[]){
     }else if(ad1y == ad2y){
       conexao = " -| ";
     }else{
-      conexao = " to[short] ";  
+      conexao = " to[short, *-*] ";  
     }
   }
 
 
   if(ja_pegou_um && !ja_pegou_outro){
+    wire_tikz2 = wire_tikz2 + "node[circ] {} " + "(" + ostrx + "," + ostry +  ");";
+    //wire_tikz1 = wire_tikz1 + "node[circ] {} ";
+   }else if(!ja_pegou_um && !ja_pegou_outro){
+    conexao = " to[short, *-*] ";
     wire_tikz2 = wire_tikz2 + "(" + ostrx + "," + ostry +  ");";
+   }else if(!ja_pegou_um && ja_pegou_outro){
+    wire_tikz1 = wire_tikz1 + "node[circ] {} ";
+    wire_tikz2 = wire_tikz2 + "%(" + ostrx + "," + ostry +  ");";
    }
-  
-  if(!ja_pegou_um && !ja_pegou_outro){
-    conexao = " to[short] ";
-    wire_tikz2 = wire_tikz2 + "(" + ostrx + "," + ostry +  ");";
-  }
   
 
   cout << "\\draw " << wire_tikz1 << conexao << wire_tikz2 << '\n'; // comando que printa a linha
