@@ -42,8 +42,15 @@ struct Struc_comp3{
   string tipo_comp;
 };
 
-struct Struc_comp3 array_comp3[100];
+struct Struct_dot_contact{ // struct auxiliar para ver se tem contatos nas linhas(wires) para colocar um ponto e guardar coordenada caso necessário
+  float x,y;
+  int contagem;
+};// a ideia é colocar um contador na análise das linhas e se tiver mais de 3 elementos em contato nesse ponto eu acrescento um circulo e uma coordenada
 
+int dot_num ={0};
+
+struct Struc_comp3 array_comp3[100];
+struct Struct_dot_contact dots[500]; // posso ter muito mais pontos do que componentes e tbm a struc ocupa menos espaço
 
 int main(int argc, char **argv)
 {
@@ -368,10 +375,10 @@ void wire_handler(string str[]){
    ad2x = stoi(str[4]);
    ad2y = stoi(str[5]);
    
-  iaux_x = round((stoi(str[2])) *1/3 ) / 10;// valores convertidos para o plano do circuitikz
-  iaux_y = -round((stoi(str[3])) *1/3 ) / 10;
-  oaux_x = round((stoi(str[4])) *1/3 ) / 10;
-  oaux_y = -round((stoi(str[5])) *1/3 ) / 10;
+  iaux_x = round((ad1x *1/3 )) / 10;// valores convertidos para o plano do circuitikz
+  iaux_y = -round((ad1y *1/3 )) / 10;
+  oaux_x = round((ad2x *1/3 )) / 10;
+  oaux_y = -round((ad2y *1/3 )) / 10;
   
   bool ja_pegou_um = false, ja_pegou_outro = false;
   string conexao;
@@ -398,17 +405,18 @@ void wire_handler(string str[]){
     ostrx = std::to_string(oaux_x);
     ostry = std::to_string(oaux_y);
 
-    int ipx,ipy,opx,opy;
+    int ipx,ipy,opx,opy;//processo para o arredondamento dos valores qe estão em string para float
     ipx = istrx.find(".");
     ipy = istry.find(".");
     opx = ostrx.find(".");
     opy = ostry.find(".");
-    
+    // apagando as casas decimais que não precisa para o arredondamento
+
     istrx.erase(ipx+2, ipx+5);
     istry.erase(ipy+2, ipy+5);
     ostrx.erase(opx+2, opx+5);
     ostry.erase(opy+2, opy+5);
-
+    //cout << istrx << " " << istry << iaux_x << iaux_y << oaux_x << oaux_y << '\n';
     
     if(!ja_pegou_um){
       wire_tikz1 = wire_tikz1 + " (" + istrx + "," + istry +  ")";
@@ -448,7 +456,7 @@ void wire_handler(string str[]){
     wire_tikz2 = wire_tikz2 + "node[circ] {} " + "(" + ostrx + "," + ostry +  ");";
     //wire_tikz1 = wire_tikz1 + "node[circ] {} ";
    }else if(!ja_pegou_um && !ja_pegou_outro){
-    conexao = " to[short, *-*] ";
+    conexao = " to[short] ";
     wire_tikz2 = wire_tikz2 + "(" + ostrx + "," + ostry +  ");";
    }else if(!ja_pegou_um && ja_pegou_outro){
     wire_tikz1 = wire_tikz1 + "node[circ] {} ";
