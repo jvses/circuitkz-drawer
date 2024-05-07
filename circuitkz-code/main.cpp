@@ -25,6 +25,8 @@ bool wires=false;
 string comp_type;
 int comp3_num = {0}; // contador de componentes de nó inicia em zero
 int k = {0};//cria contador auxiliar e já reseta ele para próximo loop
+int coord_num = {0}; //numeração de coordenadas feitas em pontos de contato
+
 
 
 void str_handler(string str[],  int contador);
@@ -45,12 +47,24 @@ struct Struc_comp3{
 struct Struct_dot_contact{ // struct auxiliar para ver se tem contatos nas linhas(wires) para colocar um ponto e guardar coordenada caso necessário
   float x,y;
   int contagem;
+  bool ja_inserido=false;
 };// a ideia é colocar um contador na análise das linhas e se tiver mais de 3 elementos em contato nesse ponto eu acrescento um circulo e uma coordenada
 
-int dot_num ={0};
+int dot_num ={1};// contador de pontos de contato de trilhas
 
 struct Struc_comp3 array_comp3[100];
-struct Struct_dot_contact dots[500]; // posso ter muito mais pontos do que componentes e tbm a struc ocupa menos espaço
+struct Struct_dot_contact dot[500]; // posso ter muito mais pontos do que componentes e tbm a struc ocupa menos espaço
+
+
+// Essa é uma função pega num stackoverflow da vida que converte valores pra string sem o erro que eu estava tendo com a to_string()
+template < typename Type > std::string to_str (const Type & t)
+{
+  std::ostringstream os;
+  os << t;
+  return os.str ();
+}
+
+
 
 int main(int argc, char **argv)
 {
@@ -88,6 +102,9 @@ int main(int argc, char **argv)
     cout << "Uso: ./convert_circuit [file]" << '\n';
   }
 
+/*  for(int i=0; i<dot_num; i++ ){
+    cout << i << "-" << dot[i].x << "," << dot[i].y << "_" << dot[i].contagem << "--" << dot[i].ja_inserido << '\n';
+  }*/
 
   return 0;
 }
@@ -129,28 +146,38 @@ void comp_handler(string str[]){
 }
 
 void gnd(string str[]){
-  cout << "\\draw (" << round((stoi(str[COMP_X])) *1/3 )/10 << "," << -round((stoi(str[COMP_Y])) *1/3 ) / 10 << ") node[ground] {};" << '\n';
+  float adrx,adry;//valores para comparação com os addrs das structs. Antes de converter para o plano X-Y do circuitikz
+  adrx=stoi(str[COMP_X]);
+  adry=stoi(str[COMP_Y]);
+
+  cout << "\\draw (" << round(adrx *1/3 )/10 << "," << -round(adry *1/3 ) / 10 << ") node[ground] {};" << '\n';
 
 }
 
 
 void prepare_latex_line2p(string str[]){
+
+  float adrx,adry;//valores para comparação com os addrs das structs. Antes de converter para o plano X-Y do circuitikz
+  adrx=stoi(str[COMP_X]);
+  adry=stoi(str[COMP_Y]);
+   
   float iaux_x, iaux_y, oaux_x, oaux_y;
+
   int rotate_aux = stoi(str[COPM_ROTATE]);
 
   //cout << " A var de rotate é: "<< rotate_aux << " e a string é: " << str[COPM_ROTATE] << '\n';
   switch(rotate_aux){
     case 0:
     case 2:
-      iaux_y = oaux_y = -round( (stoi(str[COMP_Y])) *1/3 ) / 10;// o eixo Y é o mesmo mas com sinal trocado em ambos os pontos
-      iaux_x = round( (stoi(str[COMP_X]) - 30 ) *1/3 ) / 10;
-      oaux_x = round( (stoi(str[COMP_X]) + 30 ) *1/3 ) / 10;
+      iaux_y = oaux_y = -round( (adry *1/3 )) / 10;// o eixo Y é o mesmo mas com sinal trocado em ambos os pontos
+      iaux_x = round( (adrx - 30 ) *1/3 ) / 10;
+      oaux_x = round( (adrx + 30 ) *1/3 ) / 10;
       break;
     case 1:
     case 3:
-      iaux_y = -round( (stoi(str[COMP_Y]) - 30 ) *1/3 ) / 10;
-      oaux_y = -round( (stoi(str[COMP_Y]) + 30 ) *1/3 ) / 10;
-      iaux_x = oaux_x = round( (stoi(str[COMP_X])) *1/3 ) / 10;// o eixo X é o mesmo, sem troca de sinal
+      iaux_y = -round( (adry - 30 ) *1/3 ) / 10;
+      oaux_y = -round( (adry + 30 ) *1/3 ) / 10;
+      iaux_x = oaux_x = round( adrx *1/3 ) / 10;// o eixo X é o mesmo, sem troca de sinal
       break;
     default:
       cout << "% Holve algo de errado na introdução das informações \n";
@@ -399,13 +426,17 @@ void wire_handler(string str[]){
       break;
     }
   }
-    string istrx,istry,ostrx,ostry;
-    istrx = std::to_string(iaux_x);
-    istry = std::to_string(iaux_y);
-    ostrx = std::to_string(oaux_x);
-    ostry = std::to_string(oaux_y);
 
-    int ipx,ipy,opx,opy;//processo para o arredondamento dos valores qe estão em string para float
+
+    string istrx,istry,ostrx,ostry;
+    istrx = to_str(iaux_x);
+    istry = to_str(iaux_y);
+    ostrx = to_str(oaux_x);
+    ostry = to_str(oaux_y);
+
+ /* 
+  int ipx,ipy,opx,opy;//processo para o arredondamento dos valores qe estão em string para float
+    
     ipx = istrx.find(".");
     ipy = istry.find(".");
     opx = ostrx.find(".");
@@ -415,7 +446,7 @@ void wire_handler(string str[]){
     istrx.erase(ipx+2, ipx+5);
     istry.erase(ipy+2, ipy+5);
     ostrx.erase(opx+2, opx+5);
-    ostry.erase(opy+2, opy+5);
+    ostry.erase(opy+2, opy+5); */
     //cout << istrx << " " << istry << iaux_x << iaux_y << oaux_x << oaux_y << '\n';
     
     if(!ja_pegou_um){
@@ -447,27 +478,84 @@ void wire_handler(string str[]){
     }else if(ad1y == ad2y){
       conexao = " -| ";
     }else{
-      conexao = " to[short, *-*] ";  
+      conexao = " to[short]";//", *-*] ";  
     }
   }
 
 
   if(ja_pegou_um && !ja_pegou_outro){
-    wire_tikz2 = wire_tikz2 + "node[circ] {} " + "(" + ostrx + "," + ostry +  ");";
+    wire_tikz2 = wire_tikz2 + "" + "(" + ostrx + "," + ostry +  ");";
     //wire_tikz1 = wire_tikz1 + "node[circ] {} ";
    }else if(!ja_pegou_um && !ja_pegou_outro){
     conexao = " to[short] ";
     wire_tikz2 = wire_tikz2 + "(" + ostrx + "," + ostry +  ");";
    }else if(!ja_pegou_um && ja_pegou_outro){
-    wire_tikz1 = wire_tikz1 + "node[circ] {} ";
+    wire_tikz1 = wire_tikz1;// + "node[circ] {} ";
     wire_tikz2 = wire_tikz2 + "%(" + ostrx + "," + ostry +  ");";
    }
   
 
+  //cout << iaux_x << "-" << iaux_y << "-" << oaux_x << "-" << oaux_y << '\n';    
+  //cout << istrx << "-" << istry << "-" << ostrx << "-" << ostry << '\n';    
   cout << "\\draw " << wire_tikz1 << conexao << wire_tikz2 << '\n'; // comando que printa a linha
 
-}
+  //processo para pontos de contato e coordenadas
+  //
+  //checagem se há um ponto novo para a lista
+  bool novo1=false,novo2=false;
+    for (int i=0; i < dot_num; i++){
+    if( (dot[i].x == iaux_x) && (dot[i].y == iaux_y )){
+      novo1=false;
+    }
+    else{
+      novo1=true;
+    }
+    
+    if( (dot[i].x == oaux_x) && (dot[i].y == oaux_y )){
+      novo2=false;
+    } else{
+      novo2=true;
+    }
+  }
 
+
+    //acréscimo dos pontos novos caso sejam novos
+    if(novo1){
+      dot[dot_num].x=iaux_x;
+      dot[dot_num].y=iaux_y;
+      //dot[dot_num].contagem++;
+      dot_num++;
+    }
+
+    if(novo2){
+      dot[dot_num].x=oaux_x;
+      dot[dot_num].y=oaux_y;
+      //dot[dot_num].contagem++;
+      dot_num++;
+    }
+
+
+//loop para checagem da contagem
+  for (int i=0; i < dot_num; i++){
+  
+      if( (dot[i].x == iaux_x) && (dot[i].y == iaux_y ) ){
+        dot[i].contagem++;
+      }
+      else if ( (dot[i].x == oaux_x) && (dot[i].y == oaux_y ) ){
+        dot[i].contagem++;
+      }
+  }
+
+  //loop para checagem se o ponto já foi colocado e print dele
+  for(int i=0; i < dot_num; i++){
+    if(dot[i].contagem >=3 && !dot[i].ja_inserido){
+      cout << "\\draw (" << dot[i].x << "," << dot[i].y << ")node[circ] {O" << coord_num << "} coordinate(O" << coord_num << ");\n";
+     dot[i].ja_inserido=true;
+    coord_num++; 
+    } 
+  }
+
+}
 
 void str_handler(string str[] , int contador){
   if(contador == 1 ){// só vai fazer a troca da true/false se a linha tiver um componente só
